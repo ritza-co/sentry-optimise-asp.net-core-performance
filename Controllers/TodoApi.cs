@@ -15,28 +15,29 @@ namespace todo_api.Controllers
         public TodoController(TodoContext context, ILogger<TodoController> logger)
         {
             _context = context;
-             _logger = logger;
+            _logger = logger;
         }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodoItems()
-    {  
-        try
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodoItems()
         {
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-            await Task.Delay(120000, timeoutCts.Token);
-            var result = await _context.TodoItems.ToListAsync(timeoutCts.Token);
+            try
+            {
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(35));
 
-            // this works
-            //  var result = await _context.TodoItems.ToListAsync();
-            
-            return result;
+                // Simulate a long operation (DB call, I/O, etc.)
+                await Task.Delay(TimeSpan.FromSeconds(30), timeoutCts.Token);
+
+                // Would not reach here unless delay is under timeout
+                var result = await _context.TodoItems.ToListAsync(timeoutCts.Token);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                SentrySdk.CaptureException(ex);
+                throw;
+            }
         }
-        catch (Exception ex)
-        {
-            throw;
-        }
-    }
 
         [HttpGet("{id}")]
         public ActionResult<TodoItem> GetTodoItem(int id)
@@ -78,6 +79,52 @@ namespace todo_api.Controllers
             _context.TodoItems.Remove(todoItem);
             _context.SaveChanges();
             return NoContent();
+        }
+
+        [HttpPost("seed")]
+        public async Task<IActionResult> Seed()
+        {
+            for (int i = 1; i <= 1000; i++)
+            {
+                var todo = new TodoItem { Title = $"Todo #{i}", IsDone = false };
+                _context.TodoItems.Add(todo);
+
+                for (int j = 1; j <= 10; j++)
+                {
+                    _context.Comments.Add(
+                        new Comment { Content = $"Comment {j} on Todo {i}", TodoItem = todo }
+                    );
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok("Seeded with todos and comments");
+        }
+
+        [HttpGet("nplusone-comments")]
+        public async Task<IActionResult> NPlusOneComments()
+        {
+            var todos = await _context
+                .TodoItems.OrderBy(t => t.Id) // optional for stable ordering
+                .Take(500) // make sure it's slow enough
+                .ToListAsync(); // one query
+
+            foreach (var todo in todos)
+            {
+                todo.Comments = await _context
+                    .Comments.Where(c => c.TodoItemId == todo.Id)
+                    .ToListAsync(); // N+1 queries
+            }
+
+            return Ok(todos);
+        }
+
+        [HttpGet("with-comments-fixed")]
+        public async Task<IActionResult> WithCommentsFixed()
+        {
+            var todos = await _context.TodoItems.Take(500).Include(t => t.Comments).ToListAsync(); // 1 query with join
+
+            return Ok(todos);
         }
     }
 }
