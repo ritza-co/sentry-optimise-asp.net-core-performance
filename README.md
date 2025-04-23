@@ -1,30 +1,28 @@
-# To-Do App API
+# ASP.NET Core API Performance Optimization with Sentry
 
-A basic ASP.NET Core API for performing CRUD operations on a PostgreSQL database.
+This repository contains an ASP.NET Core API for a Todo application that uses Sentry for performance monitoring and distributed tracing.
 
-### Install the .NET SDK Using the C# Dev Kit VS Code Extension
+## Features
 
-Install the [C# Dev Kit VS Code extension](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit). This will also install the [C#](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp) and [.NET Install Tool](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.vscode-dotnet-runtime) extensions.
+- CRUD operations for Todo items with parent-child relationships
+- PostgreSQL database integration with Entity Framework Core
+- Sentry instrumentation for performance monitoring and error tracking
+- Distributed tracing for API requests
+- Custom middleware for tracking request timing
 
-The C# Dev Kit VS Code extension will activate when you open a folder or workspace that contains a C# project such as this one. 
+## Prerequisites
 
-Do the first two get-started steps in the extension's welcome page:
+- .NET 8.0 SDK or later
+- PostgreSQL database
+- Sentry account
 
-- Connect your Microsoft account
-- Install the .NET SDK
+## Getting Started
 
-![](/assets/images/csharp-vscode-extension.png)
+### Install the .NET SDK
 
-## Install Dependencies
+Install the [.NET SDK](https://dotnet.microsoft.com/download) for your platform.
 
-Run the following command to install the project dependencies:
-
-```bash
-dotnet restore
-```
-
-
-## Install PostgreSQL
+### Install PostgreSQL
 
 If you use macOS, install PostgreSQL using [Homebrew](https://brew.sh/):
 
@@ -32,77 +30,134 @@ If you use macOS, install PostgreSQL using [Homebrew](https://brew.sh/):
 brew install postgresql
 ```
 
-For installation instructions on other operating systems, see the [PostgreSQL downloads page](https://www.postgresql.org/download/).  
+For installation instructions on other operating systems, see the [PostgreSQL downloads page](https://www.postgresql.org/download/).
 
+### Database Setup
 
-## Create a PostgreSQL Table for To-Dos
-
-First, run the PostgreSQL database:
+1. Start PostgreSQL:
 
 ```bash
 brew services start postgresql
 ```
 
-Then, connect to PostgreSQL using the `psql` command-line tool:
+2. Connect to PostgreSQL:
 
 ```bash
 psql postgres
 ```
 
-Once you're in the PostgreSQL prompt (starting with `postgres=#`), run the following SQL command:
-
-```
-CREATE USER admin WITH PASSWORD '<create-a-password>';
-```
-
-Create a `todos` database and give the user all privileges:
+3. Create a user and database:
 
 ```sql
+CREATE USER admin WITH PASSWORD '<your-password>';
 CREATE DATABASE todos;
 GRANT ALL PRIVILEGES ON DATABASE todos TO admin;
 ```
 
-Exit the `postgres` terminal by entering `\q`. 
+4. Exit the PostgreSQL prompt with `\q`.
 
-Create a `.env` file in the root directory and add the following PostgreSQL connection string to it:
+5. Create a `.env` file in the root directory:
 
 ```
 ConnectionStrings__DefaultConnection='Host=localhost;Database=todos;Username=admin;Password=<your-password>'
 ```
 
-Run a migration to create a "TodoItems" table using the C# model in `Models/TodoItem`:
+6. Run database migrations:
 
 ```bash
 dotnet tool install --global dotnet-ef
 dotnet ef database update
 ```
 
-Connect to the database again:
+7. Seed the database (optional):
 
 ```bash
-psql postgres
+psql -d todos -f seed.sql
 ```
 
-Connect to the todos database:
+## Configuring Sentry
 
-```sql
-\c todos
+This application uses Sentry for performance monitoring, error tracking, and distributed tracing. Sentry configuration is managed in the `appsettings.json` file.
+
+### Sentry Settings in appsettings.json
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    },
+    "Sentry": {
+      "Dsn": "https://@.ingest.de.sentry.io/",
+      "SendDefaultPii": true,
+      "MaxRequestBodySize": "Always",
+      "MinimumBreadcrumbLevel": "Debug",
+      "MinimumEventLevel": "Warning",
+      "AttachStackTrace": true,
+      "Debug": true,
+      "DiagnosticLevel": "Error",
+      "TracesSampleRate": 1.0
+    }
+  },
+  "AllowedHosts": "*"
+}
 ```
 
-Populate the "TodoItems" table with some to-dos:
+### Key Sentry Configuration Parameters
 
-```sql
-INSERT INTO "TodoItems" ("Title", "IsDone") VALUES
-    ('Buy groceries', false),
-    ('Learn ASP.NET Core', false),
-    ('Go to the gym', true),
-    ('Read a book', false),
-    ('Write documentation', false);
+- **Dsn**: Your Sentry project DSN (Data Source Name). You need to replace this with your own Sentry project DSN.
+- **SendDefaultPii**: When true, Sentry will include personal identifiable information in error reports.
+- **MaxRequestBodySize**: Controls how much of the request body is captured. Set to "Always" to capture the entire request body.
+- **MinimumBreadcrumbLevel**: The minimum level of breadcrumb logging. Set to "Debug" for detailed tracking.
+- **MinimumEventLevel**: The minimum level at which events are sent to Sentry. Set to "Warning" to avoid excessive event reporting.
+- **AttachStackTrace**: When true, stack traces are attached to all events.
+- **Debug**: Enables debug mode for Sentry SDK.
+- **DiagnosticLevel**: The level at which diagnostic information is captured.
+- **TracesSampleRate**: The sampling rate for performance traces (1.0 = 100% of requests).
+
+### Sentry Initialization in Program.cs
+
+Sentry is initialized in `Program.cs`:
+
+```csharp
+builder.WebHost.UseSentry(options =>
+{
+    options.Environment = builder.Environment.EnvironmentName;
+    options.TracesSampleRate = 1.0;
+    options.ProfilesSampleRate = 1.0;
+});
 ```
 
-Exit the `postgres` terminal with `\q` and run the .NET server:
+## Running the Application
+
+1. Restore dependencies:
+
+```bash
+dotnet restore
+```
+
+2. Run the application:
 
 ```bash
 dotnet run
 ```
 
+3. The API will be available at:
+   - <http://localhost:5000>
+   - <https://localhost:5001> (if HTTPS is enabled)
+
+## API Endpoints
+
+- `GET /api/todos` - Get all todo items
+- `GET /api/todos/{id}` - Get a specific todo item
+- `POST /api/todos` - Create a new todo item
+- `PUT /api/todos/{id}` - Update a todo item
+- `DELETE /api/todos/{id}` - Delete a todo item
+
+## Performance Monitoring Features
+
+- **Request Timing Middleware**: Custom middleware to track request timing statistics
+- **Sentry Distributed Tracing**: Automatically captures distributed traces across API calls
+- **Database Performance Tracking**: Monitors database query performance
+- **Entity Framework Core Performance**: Optimized EF Core queries with eager loading and caching
