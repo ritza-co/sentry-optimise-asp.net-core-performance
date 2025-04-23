@@ -14,9 +14,61 @@ This repository contains an ASP.NET Core API for a Todo application that uses Se
 
 - .NET 8.0 SDK or later
 - PostgreSQL database
-- Sentry account
+- A valid Sentry DSN, otherwise the application won't start
 
-## Getting Started
+## Configuring Sentry
+
+This application uses Sentry for performance monitoring, error tracking, and distributed tracing. Sentry configuration is managed in the `appsettings.json` file.
+
+### Sentry Settings in appsettings.json
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    },
+    "Sentry": {
+      "Dsn": "<Sentry DSN value here>",
+      "SendDefaultPii": true,
+      "MaxRequestBodySize": "Always",
+      "MinimumBreadcrumbLevel": "Debug",
+      "MinimumEventLevel": "Warning",
+      "AttachStackTrace": true,
+      "Debug": true,
+      "DiagnosticLevel": "Error",
+      "TracesSampleRate": 1.0
+    }
+  },
+  "AllowedHosts": "*"
+}
+```
+
+### Key Sentry Configuration Parameters
+
+- **Dsn**: Your Sentry project DSN (Data Source Name). You need to replace this with your own Sentry project DSN.
+- **SendDefaultPii**: When true, Sentry will include personal identifiable information in error reports.
+- **MaxRequestBodySize**: Controls how much of the request body is captured. Set to "Always" to capture the entire request body.
+- **MinimumBreadcrumbLevel**: The minimum level of breadcrumb logging. Set to "Debug" for detailed tracking.
+- **MinimumEventLevel**: The minimum level at which events are sent to Sentry. Set to "Warning" to avoid excessive event reporting.
+- **AttachStackTrace**: When true, stack traces are attached to all events.
+- **Debug**: Enables debug mode for Sentry SDK.
+- **DiagnosticLevel**: The level at which diagnostic information is captured.
+- **TracesSampleRate**: The sampling rate for performance traces (1.0 = 100% of requests).
+
+### Sentry Initialization in Program.cs
+
+Sentry is initialized in `Program.cs`:
+
+```csharp
+builder.WebHost.UseSentry(options =>
+{
+    options.Environment = builder.Environment.EnvironmentName;
+    options.TracesSampleRate = 1.0;
+    options.ProfilesSampleRate = 1.0;
+});
+```
 
 ### Install the .NET SDK
 
@@ -73,60 +125,6 @@ dotnet ef database update
 
 ```bash
 psql -d todos -f seed.sql
-```
-
-## Configuring Sentry
-
-This application uses Sentry for performance monitoring, error tracking, and distributed tracing. Sentry configuration is managed in the `appsettings.json` file.
-
-### Sentry Settings in appsettings.json
-
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    },
-    "Sentry": {
-      "Dsn": "https://@.ingest.de.sentry.io/",
-      "SendDefaultPii": true,
-      "MaxRequestBodySize": "Always",
-      "MinimumBreadcrumbLevel": "Debug",
-      "MinimumEventLevel": "Warning",
-      "AttachStackTrace": true,
-      "Debug": true,
-      "DiagnosticLevel": "Error",
-      "TracesSampleRate": 1.0
-    }
-  },
-  "AllowedHosts": "*"
-}
-```
-
-### Key Sentry Configuration Parameters
-
-- **Dsn**: Your Sentry project DSN (Data Source Name). You need to replace this with your own Sentry project DSN.
-- **SendDefaultPii**: When true, Sentry will include personal identifiable information in error reports.
-- **MaxRequestBodySize**: Controls how much of the request body is captured. Set to "Always" to capture the entire request body.
-- **MinimumBreadcrumbLevel**: The minimum level of breadcrumb logging. Set to "Debug" for detailed tracking.
-- **MinimumEventLevel**: The minimum level at which events are sent to Sentry. Set to "Warning" to avoid excessive event reporting.
-- **AttachStackTrace**: When true, stack traces are attached to all events.
-- **Debug**: Enables debug mode for Sentry SDK.
-- **DiagnosticLevel**: The level at which diagnostic information is captured.
-- **TracesSampleRate**: The sampling rate for performance traces (1.0 = 100% of requests).
-
-### Sentry Initialization in Program.cs
-
-Sentry is initialized in `Program.cs`:
-
-```csharp
-builder.WebHost.UseSentry(options =>
-{
-    options.Environment = builder.Environment.EnvironmentName;
-    options.TracesSampleRate = 1.0;
-    options.ProfilesSampleRate = 1.0;
-});
 ```
 
 ## Running the Application
