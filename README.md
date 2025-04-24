@@ -57,18 +57,6 @@ This application uses Sentry for performance monitoring, error tracking, and dis
 - **DiagnosticLevel**: The level at which diagnostic information is captured.
 - **TracesSampleRate**: The sampling rate for performance traces (1.0 = 100% of requests).
 
-### Sentry Initialization in Program.cs
-
-Sentry is initialized in `Program.cs`:
-
-```csharp
-builder.WebHost.UseSentry(options =>
-{
-    options.Environment = builder.Environment.EnvironmentName;
-    options.TracesSampleRate = 1.0;
-    options.ProfilesSampleRate = 1.0;
-});
-```
 
 ### Install the .NET SDK
 
