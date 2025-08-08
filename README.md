@@ -135,11 +135,11 @@ dotnet run
 
 ## API Endpoints
 
-- `GET /api/todos` - Get all todo items
-- `GET /api/todos/{id}` - Get a specific todo item
-- `POST /api/todos` - Create a new todo item
-- `PUT /api/todos/{id}` - Update a todo item
-- `DELETE /api/todos/{id}` - Delete a todo item
+- `GET /api/todo` - Get all todo items
+- `GET /api/todo/{id}` - Get a specific todo item
+- `POST /api/todo` - Create a new todo item
+- `PUT /api/todo/{id}` - Update a todo item
+- `DELETE /api/todo/{id}` - Delete a todo item
 
 ## Performance Monitoring Features
 
