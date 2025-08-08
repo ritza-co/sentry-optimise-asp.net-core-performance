@@ -85,7 +85,7 @@ dotnet ef database update;
 In another new terminal that you can close afterwards, populate the database by running:
 
 ```sh
-docker exec -i postgres psql -U admin -d todos < seed.sql
+docker exec -i postgres psql -U admin -d todos < seed.sql # note this will take a long time
 ```
 
 Back in the second terminal, start the app by running:
