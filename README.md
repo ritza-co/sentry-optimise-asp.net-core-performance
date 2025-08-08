@@ -12,11 +12,10 @@ This repository contains an ASP.NET Core API for a Todo application that uses Se
 
 ## Prerequisites
 
-- .NET 8.0 SDK or later
-- PostgreSQL database
 - A valid Sentry DSN, otherwise the application won't start
+- Docker
 
-## Configuring Sentry
+## Configure Sentry
 
 This application uses Sentry for performance monitoring, error tracking, and distributed tracing. Sentry configuration is managed in the `appsettings.json` file.
 
@@ -58,80 +57,41 @@ This application uses Sentry for performance monitoring, error tracking, and dis
 - **TracesSampleRate**: The sampling rate for performance traces (1.0 = 100% of requests).
 
 
-### Install the .NET SDK
+## Run the Application
 
-Install the [.NET SDK](https://dotnet.microsoft.com/download) for your platform.
+> Ensure you have set your DSN, as shown in the previous section.
 
-### Install PostgreSQL
+The safest, fastest, and cleanest way to run this application is with Docker, as shown in the commands below. This will work on any operating system. If you already have .NET installed on your machine, you can run the .NET commands locally instead.
 
-If you use macOS, install PostgreSQL using [Homebrew](https://brew.sh/):
+Open a terminal and start Postgresql by running:
 
 ```sh
-brew install postgresql
+docker network create sentryNetwork;
+docker run --init -it --platform=linux/amd64 --rm --name postgres --network sentryNetwork -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=password -e POSTGRES_DB=todos -p 5432:5432  postgres:17.5;
 ```
 
-For installation instructions on other operating systems, see the [PostgreSQL downloads page](https://www.postgresql.org/download/).
+In another terminal start .NET by running:
+```sh
+docker run --init  -it --platform=linux/amd64 --rm --name app --network sentryNetwork  -v ".:/app" -w "/app" -p 5236:5236 mcr.microsoft.com/dotnet/sdk:9.0 bash;
 
-### Database Setup
-
-1. Start PostgreSQL:
-
-```bash
-brew services start postgresql
+# Inside the container now:
+dotnet tool install --global dotnet-ef;
+export PATH="$PATH:/root/.dotnet/tools";
+dotnet ef database update;
 ```
 
-2. Connect to PostgreSQL:
+In another new terminal that you can close afterwards, populate the database by running:
 
-```bash
-psql postgres
+```sh
+docker exec -i postgres psql -U admin -d todos < seed.sql
 ```
 
-3. Create a user and database:
-
-```sql
-CREATE USER admin WITH PASSWORD '<your-password>';
-CREATE DATABASE todos;
-GRANT ALL PRIVILEGES ON DATABASE todos TO admin;
+Back in the second terminal, start the app by running:
+```sh
+dotnet run;
 ```
 
-4. Exit the PostgreSQL prompt with `\q`.
-
-5. Create a `.env` file in the root directory:
-
-```
-ConnectionStrings__DefaultConnection='Host=localhost;Database=todos;Username=admin;Password=<your-password>'
-```
-
-6. Run database migrations:
-
-```bash
-dotnet tool install --global dotnet-ef
-dotnet ef database update
-```
-
-7. Seed the database (optional):
-
-```bash
-psql -d todos -f seed.sql
-```
-
-## Running the Application
-
-1. Restore dependencies:
-
-```bash
-dotnet restore
-```
-
-2. Run the application:
-
-```bash
-dotnet run
-```
-
-3. The API will be available at:
-   - <http://localhost:5000>
-   - <https://localhost:5001> (if HTTPS is enabled)
+Browse to the app at http://localhost:5236/api/todo
 
 ## API Endpoints
 

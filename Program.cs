@@ -48,7 +48,7 @@ builder.Services.AddCors(options =>
         "AllowNextApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod();
+            policy.WithOrigins("http://0.0.0.0:3000").AllowAnyHeader().AllowAnyMethod();
         }
     );
 });
