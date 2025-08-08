@@ -59,9 +59,11 @@ This application uses Sentry for performance monitoring, error tracking, and dis
 
 ## Run the Application
 
-> Ensure you have set your DSN, as shown in the previous section.
+Ensure you have set your DSN, as shown in the previous section.
 
-The safest, fastest, and cleanest way to run this application is with Docker, as shown in the commands below. This will work on any operating system. If you already have .NET installed on your machine, you can run the .NET commands locally instead.
+The safest, fastest, and cleanest way to run this application is with Docker, as shown in the commands below. This will work on any operating system.
+
+> If you already have .NET installed on your machine, you can run the .NET commands locally instead, but you will need to set `Host=localhost` in the `.env` file.
 
 Open a terminal and start Postgresql by running:
 
